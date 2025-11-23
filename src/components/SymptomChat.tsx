@@ -1,0 +1,179 @@
+import { useState, useEffect, useRef } from "react";
+import { ArrowLeft, Send, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import VoiceInput from "./VoiceInput";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { getTranslation, type Language } from "@/lib/translations";
+
+interface Message {
+  role: "user" | "assistant"; // Who sent the message
+  content: string;            // Text message
+}
+
+interface SymptomChatProps {
+  language: string;
+  onBack: () => void;        // Callback to return to previous screen
+}
+
+const SymptomChat = ({ language, onBack }: SymptomChatProps) => {
+  const [messages, setMessages] = useState<Message[]>([]); // Chat history
+  const [input, setInput] = useState("");                  // User input field
+  const [isLoading, setIsLoading] = useState(false);       // Loader when AI responds
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Reset first AI message whenever language changes
+  useEffect(() => {
+    const initialMessage = getTranslation(language as Language, "initialMessage");
+    setMessages([
+      {
+        role: "assistant",
+        content: initialMessage,
+      },
+    ]);
+  }, [language]);
+
+  // Send text to AI and add messages to UI
+  const handleSendMessage = async (text: string) => {
+    if (!text.trim()) return; // Prevent blank messages
+
+    const userMessage: Message = { role: "user", content: text };
+    setMessages((prev) => [...prev, userMessage]); // Add user message
+    setInput("");
+    setIsLoading(true);
+
+    try {
+      // Fetch user context stored from Health Directory (optional data)
+      const nearbyHospitals = JSON.parse(localStorage.getItem('nearbyHospitals') || '[]');
+      const userLocation = JSON.parse(localStorage.getItem('userLocation') || 'null');
+
+      // Call Supabase Edge Function for intelligent health response
+      const { data, error } = await supabase.functions.invoke("health-assistant", {
+        body: {
+          message: text,
+          language: language,
+          conversationHistory: messages,
+          nearbyHospitals: nearbyHospitals.slice(0, 2), // Limit data to top 2
+          userLocation: userLocation,
+        },
+      });
+
+      if (error) throw error;
+
+      // Update assistant reply to UI
+      if (data?.response) {
+        const assistantMessage: Message = { role: "assistant", content: data.response };
+        setMessages((prev) => [...prev, assistantMessage]);
+      }
+    } catch (error: any) {
+      console.error("Error calling health assistant:", error);
+      toast.error(error.message || "Failed to get response. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Voice input callback → handle as normal message
+  const handleVoiceInput = (transcript: string) => {
+    handleSendMessage(transcript);
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col">
+
+      {/* Header Section */}
+      <div className="bg-gradient-to-r from-primary to-secondary p-4 text-white shadow-medium">
+        <div className="flex items-center gap-3">
+          {/* Back Button */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBack}
+            className="text-white hover:bg-white/20"
+          >
+            <ArrowLeft className="h-6 w-6" />
+          </Button>
+
+          {/* Title + Subtitle */}
+          <div>
+            <h2 className="text-xl font-semibold">
+              {getTranslation(language as Language, "symptomChecker")}
+            </h2>
+            <p className="text-sm text-white/80">
+              {getTranslation(language as Language, "aiHealthAssistant")}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Chat Display Area */}
+      <ScrollArea className="flex-1 p-4">
+        <div className="max-w-3xl mx-auto space-y-4">
+
+          {/* Loop through chat messages */}
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                message.role === "user" ? "justify-end" : "justify-start"
+              }`}
+            >
+              <div
+                className={`max-w-[85%] rounded-2xl p-4 shadow-soft ${
+                  message.role === "user"
+                    ? "bg-primary text-primary-foreground"
+                    : "bg-card text-card-foreground"
+                }`}
+              >
+                <p className="whitespace-pre-line">{message.content}</p>
+              </div>
+            </div>
+          ))}
+
+          {/* AI typing loader */}
+          {isLoading && (
+            <div className="flex justify-start">
+              <div className="bg-card rounded-2xl p-4 shadow-soft">
+                <Loader2 className="w-5 h-5 animate-spin text-primary" />
+              </div>
+            </div>
+          )}
+        </div>
+      </ScrollArea>
+
+      {/* Message Input Section */}
+      <div className="border-t bg-card p-4">
+        <div className="max-w-3xl mx-auto flex items-center gap-3">
+
+          {/* Mic Input */}
+          <VoiceInput onTranscript={handleVoiceInput} language={language} />
+
+          {/* Text Input */}
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyPress={(e) => e.key === "Enter" && handleSendMessage(input)}
+            placeholder={getTranslation(language as Language, "typeSymptoms")}
+            className="flex-1 h-12 text-base"
+            disabled={isLoading}
+          />
+
+          {/* Send Button */}
+          <Button
+            onClick={() => handleSendMessage(input)}
+            size="icon"
+            className="h-12 w-12"
+            disabled={isLoading || !input.trim()}
+          >
+            <Send className="h-5 w-5" />
+          </Button>
+
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default SymptomChat;
