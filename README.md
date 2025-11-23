@@ -39,11 +39,17 @@ npm install
 npm run dev
 
 # Future Enhancement
-> Real doctor teleconsultation integration
-> Improved medical dataset-based AI model
-> Analytics to support health officials
-> More languages & dialect tuning
-> offline-app
+Real doctor teleconsultation integration
+Improved medical dataset-based AI model
+Analytics to support health officials
+More languages & dialect tuning
+offline-app
+
+<img width="751" height="888" alt="image" src="https://github.com/user-attachments/assets/9524e9fb-f84a-4e6f-bb02-61eb7aea5e41" />
+
+<img width="1280" height="649" alt="image" src="https://github.com/user-attachments/assets/3a870ab3-aa61-4e06-80aa-a7fbb5e9fea7" />
+
+
 
 
 
