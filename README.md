@@ -29,7 +29,7 @@ User Input → Local AI Processing → Symptom Evaluation → Health Recommendat
 
 # How to run locally 
 # Clone the repo
-git clone https://github.com/<your-repo-name>.git
+git clone https://github.com/meghanasanisetty/AI-Health-Assistant_GHCI.git 
 cd AI-HEALTH-ASSISTANT_GHCI
 
 # Install dependencies
