@@ -1,4 +1,4 @@
-# AI-Health-Assistant_GHCI
+# AI-Health-Assistant_ET
 
 An AI-powered multilingual healthcare assistant designed for rural and underserved communities.
 It delivers private, reliable, and easy-to-understand* medical guidance without requiring high digital literacy.
@@ -29,8 +29,8 @@ User Input → Local AI Processing → Symptom Evaluation → Health Recommendat
 
 # How to run locally 
 # Clone the repo
-git clone https://github.com/meghanasanisetty/AI-Health-Assistant_GHCI.git 
-cd AI-HEALTH-ASSISTANT_GHCI
+git clone https://github.com/meghanasanisetty/AI-Health-Assistant_ET.git 
+cd AI-HEALTH-ASSISTANT_ET
 
 # Install dependencies
 npm install
